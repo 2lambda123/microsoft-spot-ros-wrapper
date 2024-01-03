@@ -151,7 +151,11 @@ class SpotInterface:
     ### Callback functions ###
 
     def self_right_cmd_srv(self, stand):
-        """Callback that sends self-right cmd"""
+        """Callback that sends self-right cmd
+
+        :param stand: 
+
+        """
         cmd = RobotCommandBuilder.selfright_command()
         ret = self.command_client.robot_command(cmd)
         rospy.loginfo("Robot self right cmd sent. {}".format(ret))
@@ -159,7 +163,11 @@ class SpotInterface:
         return []
 
     def stand_cmd_srv(self, stand):
-        """Callback that sends stand cmd at a given height delta [m] from standard configuration"""
+        """Callback that sends stand cmd at a given height delta [m] from standard configuration
+
+        :param stand: 
+
+        """
 
         cmd = RobotCommandBuilder.stand_command(
             body_height=stand.body_pose.translation.z,
@@ -171,12 +179,14 @@ class SpotInterface:
         return []
 
     def trajectory_cmd_srv(self, trajectory):
-        """
-        Callback that specifies waypoint(s) (Point) [m] with a final orientation [rad]
-
+        """Callback that specifies waypoint(s) (Point) [m] with a final orientation [rad]
+        
         The name of the frame that trajectory is relative to.
         The trajectory must be expressed in a gravity aligned frame, so either "vision", "odom", or "flat_body".
         Any other provided se2_frame_name will be rejected and the trajectory command will not be exectuted.
+
+        :param trajectory: 
+
         """
         # TODO: Support other reference frames (currently only VISION ref. frame)
 
@@ -206,7 +216,11 @@ class SpotInterface:
         spot_ros_srvs.srv.TrajectoryResponse(final_pose)
 
     def velocity_cmd_srv(self, twist):
-        """Callback that sends instantaneous velocity [m/s] commands to Spot"""
+        """Callback that sends instantaneous velocity [m/s] commands to Spot
+
+        :param twist: 
+
+        """
 
         v_x = twist.velocity.linear.x
         v_y = twist.velocity.linear.y
@@ -225,7 +239,12 @@ class SpotInterface:
     ### Helper functions ###
 
     def block_until_pose_reached(self, cmd, goal):
-        """Do not return until goal waypoint is reached, or TRAJECTORY_CMD_TIMEOUT is reached."""
+        """Do not return until goal waypoint is reached, or TRAJECTORY_CMD_TIMEOUT is reached.
+
+        :param cmd: 
+        :param goal: 
+
+        """
         # TODO: Make trajectory_cmd_timeout part of the service request
 
         self.command_client.robot_command(
@@ -247,7 +266,11 @@ class SpotInterface:
         return self.is_final_state(goal)
 
     def is_final_state(self, goal):
-        """Check if the current robot state is within range of the specified position."""
+        """Check if the current robot state is within range of the specified position.
+
+        :param goal: 
+
+        """
         goal_x = goal[0]
         goal_y = goal[1]
         goal_heading = goal[2]
@@ -274,7 +297,11 @@ class SpotInterface:
         return False
 
     def quat_to_euler(self, quat):
-        """Convert a quaternion to xyz Euler angles."""
+        """Convert a quaternion to xyz Euler angles.
+
+        :param quat: 
+
+        """
         q = [quat.x, quat.y, quat.z, quat.w]
         roll = math.atan2(
             2 * q[3] * q[0] + q[1] * q[2], 1 - 2 * q[0] ** 2 + 2 * q[1] ** 2
@@ -304,6 +331,8 @@ class SpotInterface:
             system_fault_state
             estop_states[]
             behavior_fault_state
+
+
         """
         robot_state = self.robot_state_client.get_robot_state()
         rs_msg = spot_ros_msgs.msg.RobotState()
@@ -564,6 +593,7 @@ class SpotInterface:
         return ks_msg, rs_msg  # kinematic state message, robot state message
 
     def start_spot_ros_interface(self):
+        """ """
         # ROS Node initialization
         rospy.init_node("spot_ros_interface_py")
         rate = rospy.Rate(200)  # Update at 200 Hz
