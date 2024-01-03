@@ -156,7 +156,7 @@ class SpotInterface:
     def self_right_cmd_srv(self, stand):
         """Callback that sends self-right cmd
 
-        :param stand: 
+        :param stand:
 
         """
         cmd = RobotCommandBuilder.selfright_command()
@@ -168,7 +168,7 @@ class SpotInterface:
     def stand_cmd_srv(self, stand):
         """Callback that sends stand cmd at a given height delta [m] from standard configuration
 
-        :param stand: 
+        :param stand:
 
         """
 
@@ -183,12 +183,12 @@ class SpotInterface:
 
     def trajectory_cmd_srv(self, trajectory):
         """Callback that specifies waypoint(s) (Point) [m] with a final orientation [rad]
-        
+
         The name of the frame that trajectory is relative to.
         The trajectory must be expressed in a gravity aligned frame, so either "vision", "odom", or "flat_body".
         Any other provided se2_frame_name will be rejected and the trajectory command will not be exectuted.
 
-        :param trajectory: 
+        :param trajectory:
 
         """
         # TODO: Support other reference frames (currently only VISION ref. frame)
@@ -221,7 +221,7 @@ class SpotInterface:
     def velocity_cmd_srv(self, twist):
         """Callback that sends instantaneous velocity [m/s] commands to Spot
 
-        :param twist: 
+        :param twist:
 
         """
 
@@ -244,8 +244,8 @@ class SpotInterface:
     def block_until_pose_reached(self, cmd, goal):
         """Do not return until goal waypoint is reached, or TRAJECTORY_CMD_TIMEOUT is reached.
 
-        :param cmd: 
-        :param goal: 
+        :param cmd:
+        :param goal:
 
         """
         # TODO: Make trajectory_cmd_timeout part of the service request
@@ -271,7 +271,7 @@ class SpotInterface:
     def is_final_state(self, goal):
         """Check if the current robot state is within range of the specified position.
 
-        :param goal: 
+        :param goal:
 
         """
         goal_x = goal[0]
@@ -302,7 +302,7 @@ class SpotInterface:
     def quat_to_euler(self, quat):
         """Convert a quaternion to xyz Euler angles.
 
-        :param quat: 
+        :param quat:
 
         """
         q = [quat.x, quat.y, quat.z, quat.w]
