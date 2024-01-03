@@ -66,17 +66,13 @@ class SpotInterface:
                 )
                 if resp != 0:
                     print(
-                        "ERROR: Cannot detect a Spot with IP: {}.\nMake sure Spot is powered on and on the same network".format(
-                            config.hostname
-                        )
-                    )
+                        "ERROR: Cannot detect a Spot with IP: {}.\nMake sure Spot is powered on and on the same network"
+                        .format(config.hostname))
                     sys.exit()
         except:
             print(
-                "ERROR: Cannot detect a Spot with IP: {}.\nMake sure Spot is powered on and on the same network".format(
-                    config.hostname
-                )
-            )
+                "ERROR: Cannot detect a Spot with IP: {}.\nMake sure Spot is powered on and on the same network"
+                .format(config.hostname))
             sys.exit()
 
         # Set up SDK
@@ -94,48 +90,41 @@ class SpotInterface:
 
         # Client to send cmds to Spot
         self.command_client = self.robot.ensure_client(
-            RobotCommandClient.default_service_name
-        )
+            RobotCommandClient.default_service_name)
 
         # Client to request images from Spot
-        self.image_client = self.robot.ensure_client(ImageClient.default_service_name)
+        self.image_client = self.robot.ensure_client(
+            ImageClient.default_service_name)
 
         self.image_source_names = [
-            src.name
-            for src in self.image_client.list_image_sources()
+            src.name for src in self.image_client.list_image_sources()
             if "image" in src.name
         ]
 
         self.depth_image_source_names = [
-            src.name
-            for src in self.image_client.list_image_sources()
+            src.name for src in self.image_client.list_image_sources()
             if "depth_in_visual_frame" in src.name
         ]
 
         # Client to request robot state
         self.robot_state_client = self.robot.ensure_client(
-            RobotStateClient.default_service_name
-        )
+            RobotStateClient.default_service_name)
 
         # Client to request local occupancy grid
         self.grid_client = self.robot.ensure_client(
-            LocalGridClient.default_service_name
-        )
+            LocalGridClient.default_service_name)
         self.local_grid_types = self.grid_client.get_local_grid_types()
 
         # Spot requires a software estop to be activated.
         estop_client = self.robot.ensure_client(
-            bosdyn.client.estop.EstopClient.default_service_name
-        )
+            bosdyn.client.estop.EstopClient.default_service_name)
         self.estop_endpoint = bosdyn.client.estop.EstopEndpoint(
-            client=estop_client, name="spot_ros_interface", estop_timeout=9.0
-        )
+            client=estop_client, name="spot_ros_interface", estop_timeout=9.0)
         self.estop_endpoint.force_simple_setup()
 
         # Only one client at a time can operate a robot.
         self.lease_client = self.robot.ensure_client(
-            bosdyn.client.lease.LeaseClient.default_service_name
-        )
+            bosdyn.client.lease.LeaseClient.default_service_name)
         try:
             self.lease = self.lease_client.acquire()
         except bosdyn.client.lease.ResourceAlreadyClaimedError as err:
@@ -229,14 +218,16 @@ class SpotInterface:
         v_y = twist.velocity.linear.y
         v_rot = twist.velocity.angular.z
 
-        cmd = RobotCommandBuilder.velocity_command(v_x=v_x, v_y=v_y, v_rot=v_rot)
+        cmd = RobotCommandBuilder.velocity_command(v_x=v_x,
+                                                   v_y=v_y,
+                                                   v_rot=v_rot)
 
-        self.command_client.robot_command(
-            cmd, end_time_secs=time.time() + self.VELOCITY_CMD_DURATION
-        )
+        self.command_client.robot_command(cmd,
+                                          end_time_secs=time.time() +
+                                          self.VELOCITY_CMD_DURATION)
         rospy.loginfo(
-            "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot)
-        )
+            "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(
+                v_x, v_y, v_rot))
         return []
 
     ### Helper functions ###
@@ -253,17 +244,14 @@ class SpotInterface:
         self.command_client.robot_command(
             cmd,
             end_time_secs=time.time() + self.TRAJECTORY_CMD_TIMEOUT
-            if self.TRAJECTORY_CMD_TIMEOUT
-            else None,
+            if self.TRAJECTORY_CMD_TIMEOUT else None,
         )
 
         start_time = time.time()
         current_time = time.time()
         while not self.is_final_state(goal) and (
-            current_time - start_time < self.TRAJECTORY_CMD_TIMEOUT
-            if self.TRAJECTORY_CMD_TIMEOUT
-            else True
-        ):
+                current_time - start_time < self.TRAJECTORY_CMD_TIMEOUT
+                if self.TRAJECTORY_CMD_TIMEOUT else True):
             time.sleep(0.25)
             current_time = time.time()
         return self.is_final_state(goal)
@@ -279,23 +267,19 @@ class SpotInterface:
         goal_heading = goal[2]
         robot_state = self.get_robot_state()[0].vision_tform_body
         robot_pose = robot_state.translation
-        robot_angle = self.quat_to_euler(
-            (
-                robot_state.rotation.x,
-                robot_state.rotation.y,
-                robot_state.rotation.z,
-                robot_state.rotation.w,
-            )
-        ).yaw
+        robot_angle = self.quat_to_euler((
+            robot_state.rotation.x,
+            robot_state.rotation.y,
+            robot_state.rotation.z,
+            robot_state.rotation.w,
+        )).yaw
 
         x_dist = abs(goal_x - robot_pose.x)
         y_dist = abs(goal_y - robot_pose.y)
         angle = abs(goal_heading - robot_angle)
-        if (
-            (x_dist < self.x_goal_tolerance)
-            and (y_dist < self.y_goal_tolerance)
-            and (angle < self.angle_goal_tolerance)
-        ):
+        if ((x_dist < self.x_goal_tolerance)
+                and (y_dist < self.y_goal_tolerance)
+                and (angle < self.angle_goal_tolerance)):
             return True
         return False
 
@@ -306,15 +290,12 @@ class SpotInterface:
 
         """
         q = [quat.x, quat.y, quat.z, quat.w]
-        roll = math.atan2(
-            2 * q[3] * q[0] + q[1] * q[2], 1 - 2 * q[0] ** 2 + 2 * q[1] ** 2
-        )
-        pitch = math.atan2(
-            2 * q[1] * q[3] - 2 * q[0] * q[2], 1 - 2 * q[1] ** 2 - 2 * q[2] ** 2
-        )
-        yaw = math.atan2(
-            2 * q[2] * q[3] + 2 * q[0] * q[1], 1 - 2 * q[1] ** 2 - 2 * q[2] ** 2
-        )
+        roll = math.atan2(2 * q[3] * q[0] + q[1] * q[2],
+                          1 - 2 * q[0]**2 + 2 * q[1]**2)
+        pitch = math.atan2(2 * q[1] * q[3] - 2 * q[0] * q[2],
+                           1 - 2 * q[1]**2 - 2 * q[2]**2)
+        yaw = math.atan2(2 * q[2] * q[3] + 2 * q[0] * q[1],
+                         1 - 2 * q[1]**2 - 2 * q[2]**2)
         return bosdyn.geometry.EulerZXY(yaw=yaw, roll=roll, pitch=pitch)
 
     # TODO: Unit test the get_state method conversion from pbuf to ROS msg (test repeated fields, etc)
@@ -339,7 +320,6 @@ class SpotInterface:
         """
         robot_state = self.robot_state_client.get_robot_state()
         rs_msg = spot_ros_msgs.msg.RobotState()
-
         """ PowerState conversion """
         rs_msg.power_state.header.stamp.secs = robot_state.power_state.timestamp.seconds
         rs_msg.power_state.header.stamp.nsecs = robot_state.power_state.timestamp.nanos
@@ -349,13 +329,10 @@ class SpotInterface:
         rs_msg.power_state.shore_power_state = robot_state.power_state.shore_power_state
         # [google.protobuf.DoubleValue]
         rs_msg.power_state.locomotion_charge_percentage = (
-            robot_state.power_state.locomotion_charge_percentage.value
-        )
+            robot_state.power_state.locomotion_charge_percentage.value)
         # [google.protobuf.Duration]
         rs_msg.power_state.locomotion_estimated_runtime.secs = (
-            robot_state.power_state.locomotion_estimated_runtime.seconds
-        )
-
+            robot_state.power_state.locomotion_estimated_runtime.seconds)
         """ BatteryState conversion [repeated field] """
         for battery_state in robot_state.battery_states:
             battery_state_msg = sensor_msgs.msg.BatteryState()
@@ -368,8 +345,7 @@ class SpotInterface:
             battery_state_msg.header = header
 
             battery_state_msg.percentage = (
-                battery_state.charge_percentage.value / 100
-            )  # [double]
+                battery_state.charge_percentage.value / 100)  # [double]
             # NOTE: Using battery_state_msg.charge as the estimated runtime in sec
             # [google.protobuf.Duration]
             battery_state_msg.charge = battery_state.estimated_runtime.seconds
@@ -382,7 +358,6 @@ class SpotInterface:
             battery_state_msg.power_supply_status = battery_state.status
 
             rs_msg.battery_states.append(battery_state_msg)
-
         """ CommsState conversion [repeated field] """
         for comms_state in robot_state.comms_states:
             comms_state_msg = spot_ros_msgs.msg.CommsState()
@@ -396,7 +371,6 @@ class SpotInterface:
             comms_state_msg.essid = comms_state.wifi_state.essid  # [string]
 
             rs_msg.comms_states.append(comms_state_msg)
-
         """ SystemFaultState conversion """
         ### faults is Repeated ###
         for fault in robot_state.system_fault_state.faults:
@@ -427,8 +401,7 @@ class SpotInterface:
             system_fault_msg.header.frame_id = historical_fault.name
             # [google.protobuf.Timestamp]
             system_fault_msg.header.stamp.secs = (
-                historical_fault.onset_timestamp.seconds
-            )
+                historical_fault.onset_timestamp.seconds)
             # [google.protobuf.Timestamp]
             system_fault_msg.header.stamp.nsecs = historical_fault.onset_timestamp.nanos
             # [google.protobuf.Duration]
@@ -443,16 +416,17 @@ class SpotInterface:
             system_fault_msg.attributes = historical_fault.attributes
             system_fault_msg.severity = historical_fault.severity  # [enum]
 
-            rs_msg.system_fault_state.historical_faults.append(system_fault_msg)
+            rs_msg.system_fault_state.historical_faults.append(
+                system_fault_msg)
 
         # [map<string,enum>]
         if robot_state.system_fault_state.aggregated:
-            for key, value in robot_state.system_fault_state.aggregated.items():
+            for key, value in robot_state.system_fault_state.aggregated.items(
+            ):
                 kv = diagnostic_msgs.msg.KeyValue()
                 kv.key = key
                 kv.value = value
                 rs_msg.system_fault_state.aggregated.append(kv)
-
         """ EStopState conversion [repeated field] """
         for estop_state in robot_state.estop_states:
             estop_msg = spot_ros_msgs.msg.EStopState()
@@ -468,16 +442,13 @@ class SpotInterface:
             estop_msg.state_description = estop_state.state_description
 
             rs_msg.estop_states.append(estop_msg)
-
         """ KinematicState conversion """
         ks_msg = spot_ros_msgs.msg.KinematicState()
 
         ks_msg.header.stamp.secs = (
-            robot_state.kinematic_state.acquisition_timestamp.seconds
-        )
+            robot_state.kinematic_state.acquisition_timestamp.seconds)
         ks_msg.header.stamp.nsecs = (
-            robot_state.kinematic_state.acquisition_timestamp.nanos
-        )
+            robot_state.kinematic_state.acquisition_timestamp.nanos)
 
         ### joint_states is repeated ###
         js = sensor_msgs.msg.JointState()
@@ -494,8 +465,7 @@ class SpotInterface:
 
         # SE3Pose representing transform of Spot's Body frame relative to the inertial Vision frame
         vision_tform_body = get_vision_tform_body(
-            robot_state.kinematic_state.transforms_snapshot
-        )
+            robot_state.kinematic_state.transforms_snapshot)
 
         ks_msg.vision_tform_body.translation.x = vision_tform_body.x
         ks_msg.vision_tform_body.translation.y = vision_tform_body.y
@@ -508,8 +478,7 @@ class SpotInterface:
 
         # odom_tform_body: SE3Pose representing transform of Spot's Body frame relative to the odometry frame
         odom_tform_body = get_odom_tform_body(
-            robot_state.kinematic_state.transforms_snapshot
-        )
+            robot_state.kinematic_state.transforms_snapshot)
 
         ks_msg.odom_tform_body.translation.x = odom_tform_body.x
         ks_msg.odom_tform_body.translation.y = odom_tform_body.y
@@ -519,49 +488,35 @@ class SpotInterface:
         ks_msg.odom_tform_body.rotation.y = odom_tform_body.rot.y
         ks_msg.odom_tform_body.rotation.z = odom_tform_body.rot.z
         ks_msg.odom_tform_body.rotation.w = odom_tform_body.rot.w
-
         """ velocity_of_body_in_vision """
         ks_msg.velocity_of_body_in_vision.linear.x = (
-            robot_state.kinematic_state.velocity_of_body_in_vision.linear.x
-        )
+            robot_state.kinematic_state.velocity_of_body_in_vision.linear.x)
         ks_msg.velocity_of_body_in_vision.linear.y = (
-            robot_state.kinematic_state.velocity_of_body_in_vision.linear.y
-        )
+            robot_state.kinematic_state.velocity_of_body_in_vision.linear.y)
         ks_msg.velocity_of_body_in_vision.linear.z = (
-            robot_state.kinematic_state.velocity_of_body_in_vision.linear.z
-        )
+            robot_state.kinematic_state.velocity_of_body_in_vision.linear.z)
 
         ks_msg.velocity_of_body_in_vision.angular.x = (
-            robot_state.kinematic_state.velocity_of_body_in_vision.angular.x
-        )
+            robot_state.kinematic_state.velocity_of_body_in_vision.angular.x)
         ks_msg.velocity_of_body_in_vision.angular.y = (
-            robot_state.kinematic_state.velocity_of_body_in_vision.angular.y
-        )
+            robot_state.kinematic_state.velocity_of_body_in_vision.angular.y)
         ks_msg.velocity_of_body_in_vision.angular.z = (
-            robot_state.kinematic_state.velocity_of_body_in_vision.angular.z
-        )
-
+            robot_state.kinematic_state.velocity_of_body_in_vision.angular.z)
         """ velocity_of_body_in_odom """
 
         ks_msg.velocity_of_body_in_odom.linear.x = (
-            robot_state.kinematic_state.velocity_of_body_in_odom.linear.x
-        )
+            robot_state.kinematic_state.velocity_of_body_in_odom.linear.x)
         ks_msg.velocity_of_body_in_odom.linear.y = (
-            robot_state.kinematic_state.velocity_of_body_in_odom.linear.y
-        )
+            robot_state.kinematic_state.velocity_of_body_in_odom.linear.y)
         ks_msg.velocity_of_body_in_odom.linear.z = (
-            robot_state.kinematic_state.velocity_of_body_in_odom.linear.z
-        )
+            robot_state.kinematic_state.velocity_of_body_in_odom.linear.z)
 
         ks_msg.velocity_of_body_in_odom.angular.x = (
-            robot_state.kinematic_state.velocity_of_body_in_odom.angular.x
-        )
+            robot_state.kinematic_state.velocity_of_body_in_odom.angular.x)
         ks_msg.velocity_of_body_in_odom.angular.y = (
-            robot_state.kinematic_state.velocity_of_body_in_odom.angular.y
-        )
+            robot_state.kinematic_state.velocity_of_body_in_odom.angular.y)
         ks_msg.velocity_of_body_in_odom.angular.z = (
-            robot_state.kinematic_state.velocity_of_body_in_odom.angular.z
-        )
+            robot_state.kinematic_state.velocity_of_body_in_odom.angular.z)
 
         # BehaviorFaultState conversion
         """faults is repeated"""
@@ -602,25 +557,24 @@ class SpotInterface:
         rate = rospy.Rate(200)  # Update at 200 Hz
 
         # Each service will handle a specific command to Spot instance
-        rospy.Service(
-            "self_right_cmd", spot_ros_srvs.srv.Stand, self.self_right_cmd_srv
-        )
+        rospy.Service("self_right_cmd", spot_ros_srvs.srv.Stand,
+                      self.self_right_cmd_srv)
         rospy.Service("stand_cmd", spot_ros_srvs.srv.Stand, self.stand_cmd_srv)
-        rospy.Service(
-            "trajectory_cmd", spot_ros_srvs.srv.Trajectory, self.trajectory_cmd_srv
-        )
-        rospy.Service("velocity_cmd", spot_ros_srvs.srv.Velocity, self.velocity_cmd_srv)
+        rospy.Service("trajectory_cmd", spot_ros_srvs.srv.Trajectory,
+                      self.trajectory_cmd_srv)
+        rospy.Service("velocity_cmd", spot_ros_srvs.srv.Velocity,
+                      self.velocity_cmd_srv)
 
         # Single image publisher will publish all images from all Spot cameras
-        kinematic_state_pub = rospy.Publisher(
-            "kinematic_state", spot_ros_msgs.msg.KinematicState, queue_size=20
-        )
-        robot_state_pub = rospy.Publisher(
-            "robot_state", spot_ros_msgs.msg.RobotState, queue_size=20
-        )
-        occupancy_grid_pub = rospy.Publisher(
-            "occupancy_grid", visualization_msgs.msg.Marker, queue_size=20
-        )
+        kinematic_state_pub = rospy.Publisher("kinematic_state",
+                                              spot_ros_msgs.msg.KinematicState,
+                                              queue_size=20)
+        robot_state_pub = rospy.Publisher("robot_state",
+                                          spot_ros_msgs.msg.RobotState,
+                                          queue_size=20)
+        occupancy_grid_pub = rospy.Publisher("occupancy_grid",
+                                             visualization_msgs.msg.Marker,
+                                             queue_size=20)
 
         # Publish tf2 from visual odometry frame to Spot's base link
         spot_tf_broadcaster = tf2_ros.TransformBroadcaster()
@@ -628,28 +582,28 @@ class SpotInterface:
         # Publish static tf2 from Spot's base link to front-left camera
         spot_tf_static_broadcaster = tf2_ros.StaticTransformBroadcaster()
 
-        image_only_pub = rospy.Publisher(
-            "spot_image", sensor_msgs.msg.Image, queue_size=20
-        )
+        image_only_pub = rospy.Publisher("spot_image",
+                                         sensor_msgs.msg.Image,
+                                         queue_size=20)
 
-        camera_info_pub = rospy.Publisher(
-            "spot_cam_info", sensor_msgs.msg.CameraInfo, queue_size=20
-        )
+        camera_info_pub = rospy.Publisher("spot_cam_info",
+                                          sensor_msgs.msg.CameraInfo,
+                                          queue_size=20)
 
-        depth_image_pub = rospy.Publisher(
-            "spot_depth_image", sensor_msgs.msg.Image, queue_size=20
-        )
+        depth_image_pub = rospy.Publisher("spot_depth_image",
+                                          sensor_msgs.msg.Image,
+                                          queue_size=20)
 
         # For RViz 3rd person POV visualization
         if self.third_person_view:
-            joint_state_pub = rospy.Publisher(
-                "joint_state_from_spot", sensor_msgs.msg.JointState, queue_size=20
-            )
+            joint_state_pub = rospy.Publisher("joint_state_from_spot",
+                                              sensor_msgs.msg.JointState,
+                                              queue_size=20)
 
         try:
             with bosdyn.client.lease.LeaseKeepAlive(
-                self.lease_client
-            ), bosdyn.client.estop.EstopKeepAlive(self.estop_endpoint):
+                    self.lease_client), bosdyn.client.estop.EstopKeepAlive(
+                        self.estop_endpoint):
                 rospy.loginfo("Acquired lease")
                 if self.motors_on:
                     rospy.loginfo(
@@ -674,49 +628,40 @@ class SpotInterface:
                     t.header.frame_id = "vision_odometry_frame"
                     t.child_frame_id = "base_link"
                     t.transform.translation.x = (
-                        kinematic_state.vision_tform_body.translation.x
-                    )
+                        kinematic_state.vision_tform_body.translation.x)
                     t.transform.translation.y = (
-                        kinematic_state.vision_tform_body.translation.y
-                    )
+                        kinematic_state.vision_tform_body.translation.y)
                     t.transform.translation.z = (
-                        kinematic_state.vision_tform_body.translation.z
-                    )
+                        kinematic_state.vision_tform_body.translation.z)
                     t.transform.rotation.x = (
-                        kinematic_state.vision_tform_body.rotation.x
-                    )
+                        kinematic_state.vision_tform_body.rotation.x)
                     t.transform.rotation.y = (
-                        kinematic_state.vision_tform_body.rotation.y
-                    )
+                        kinematic_state.vision_tform_body.rotation.y)
                     t.transform.rotation.z = (
-                        kinematic_state.vision_tform_body.rotation.z
-                    )
+                        kinematic_state.vision_tform_body.rotation.z)
                     t.transform.rotation.w = (
-                        kinematic_state.vision_tform_body.rotation.w
-                    )
+                        kinematic_state.vision_tform_body.rotation.w)
                     spot_tf_broadcaster.sendTransform(t)
 
                     if self.third_person_view:
                         joint_state_pub.publish(kinematic_state.joint_states)
-
                     """ Publish Images and Depth Images"""
                     # TODO: Add param to filter which images/dept images get published (bandwidth constraints)
                     img_reqs = [
                         image_pb2.ImageRequest(
                             image_source_name=source,
                             image_format=image_pb2.Image.FORMAT_RAW,
-                        )
-                        for source in self.image_source_names
+                        ) for source in self.image_source_names
                     ]
                     depth_img_reqs = [
                         image_pb2.ImageRequest(
                             image_source_name=source,
                             image_format=image_pb2.Image.FORMAT_RAW,
-                        )
-                        for source in self.depth_image_source_names
+                        ) for source in self.depth_image_source_names
                     ]
                     image_list = self.image_client.get_image(img_reqs)
-                    depth_image_list = self.image_client.get_image(depth_img_reqs)
+                    depth_image_list = self.image_client.get_image(
+                        depth_img_reqs)
 
                     full_list = []
                     for i in image_list:
@@ -737,10 +682,8 @@ class SpotInterface:
                             i.height = img.shot.image.rows
                             i.data = img.shot.image.data
 
-                            if (
-                                img.shot.image.pixel_format
-                                == image_pb2.Image.PIXEL_FORMAT_DEPTH_U16
-                            ):
+                            if (img.shot.image.pixel_format ==
+                                    image_pb2.Image.PIXEL_FORMAT_DEPTH_U16):
                                 # Depth images are 16 bit
                                 dtype = np.uint16
                                 i.step = img.shot.image.cols * 2
@@ -762,7 +705,9 @@ class SpotInterface:
                                 cam_info.D = [0.0, 0.0, 0.0, 0.0]
                                 f = img.source.pinhole.intrinsics.focal_length
                                 c = img.source.pinhole.intrinsics.principal_point
-                                cam_info.K = [f.x, 0, c.x, 0, f.y, c.y, 0, 0, 1]
+                                cam_info.K = [
+                                    f.x, 0, c.x, 0, f.y, c.y, 0, 0, 1
+                                ]
 
                                 # Publish camera info
                                 camera_info_pub.publish(cam_info)
@@ -785,8 +730,7 @@ class SpotInterface:
                             body_tform_cam_tf.rotation.w = body_tform_cam.rotation.w
 
                             camera_transform_stamped = (
-                                geometry_msgs.msg.TransformStamped()
-                            )
+                                geometry_msgs.msg.TransformStamped())
                             camera_transform_stamped.header.stamp = header.stamp
                             camera_transform_stamped.header.frame_id = "base_link"
                             camera_transform_stamped.transform = body_tform_cam_tf
@@ -794,12 +738,11 @@ class SpotInterface:
 
                             # Publish body to camera static tf
                             spot_tf_static_broadcaster.sendTransform(
-                                camera_transform_stamped
-                            )
-
+                                camera_transform_stamped)
                     """ Publish occupancy grid"""
                     if occupancy_grid_pub.get_num_connections() > 0:
-                        local_grid_proto = self.grid_client.get_local_grids(["terrain"])
+                        local_grid_proto = self.grid_client.get_local_grids(
+                            ["terrain"])
                         markers = get_terrain_markers(local_grid_proto)
                         occupancy_grid_pub.publish(markers)
 
@@ -815,7 +758,9 @@ if __name__ == "__main__":
     """Command line interface."""
     parser = argparse.ArgumentParser()
     bosdyn.client.util.add_common_arguments(parser)
-    parser.add_argument("--motors_on", help="Power on motors [Y/n]", default="Y")
+    parser.add_argument("--motors_on",
+                        help="Power on motors [Y/n]",
+                        default="Y")
     options = parser.parse_args(sys.argv[1:])
 
     try:
