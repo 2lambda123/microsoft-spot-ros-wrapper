@@ -3,11 +3,10 @@
 import argparse
 import logging
 import math
-import sys
 import os
 import subprocess
+import sys
 import time
-import numpy as np
 
 # Bosdyn specific imports
 import bosdyn.client
@@ -15,37 +14,31 @@ import bosdyn.client.estop
 import bosdyn.client.lease
 import bosdyn.client.util
 import bosdyn.geometry
-
-from bosdyn.client import math_helpers
-from bosdyn.client.image import ImageClient
-from bosdyn.client.robot_command import RobotCommandBuilder, RobotCommandClient
-from bosdyn.client.robot_state import RobotStateClient
-from bosdyn.client.local_grid import LocalGridClient
-from bosdyn.api import trajectory_pb2, image_pb2, robot_state_pb2, local_grid_pb2
-
-from bosdyn.client.frame_helpers import (
-    get_a_tform_b,
-    get_vision_tform_body,
-    get_odom_tform_body,
-    BODY_FRAME_NAME,
-    GRAV_ALIGNED_BODY_FRAME_NAME,
-    VISION_FRAME_NAME,
-    ODOM_FRAME_NAME,
-)
-
-# ROS specific imports
-import rospy
 import diagnostic_msgs.msg
 import geometry_msgs.msg
-import std_msgs.msg
+import numpy as np
+# ROS specific imports
+import rospy
 import sensor_msgs.msg
+import std_msgs.msg
+import tf2_ros
 import visualization_msgs.msg
+from bosdyn.api import (image_pb2, local_grid_pb2, robot_state_pb2,
+                        trajectory_pb2)
+from bosdyn.client import math_helpers
+from bosdyn.client.frame_helpers import (BODY_FRAME_NAME,
+                                         GRAV_ALIGNED_BODY_FRAME_NAME,
+                                         ODOM_FRAME_NAME, VISION_FRAME_NAME,
+                                         get_a_tform_b, get_odom_tform_body,
+                                         get_vision_tform_body)
+from bosdyn.client.image import ImageClient
+from bosdyn.client.local_grid import LocalGridClient
+from bosdyn.client.robot_command import RobotCommandBuilder, RobotCommandClient
+from bosdyn.client.robot_state import RobotStateClient
+from grid_utils import get_terrain_markers
+
 import spot_ros_msgs.msg
 import spot_ros_srvs.srv
-
-import tf2_ros
-
-from grid_utils import get_terrain_markers
 
 
 class SpotInterface:
